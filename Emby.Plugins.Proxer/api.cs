@@ -11,6 +11,7 @@ using MediaBrowser.Common.Net;
 using System.IO;
 using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Logging;
+using System.Globalization;
 
 namespace Emby.Plugins.Proxer
 {
@@ -54,7 +55,7 @@ namespace Emby.Plugins.Proxer
                 Name = SelectName(WebContent, preferredLanguage)
             };
 
-            result.SearchProviderName = One_line_regex(new Regex(@">([\S\s]*?)<"), One_line_regex(new Regex(@"<td><b>Original Titel<\/b><\/td>([\S\s]*?)\/td>"), WebContent));
+            result.SearchProviderName = One_line_regex(new Regex(@">([\S\s]*?)<", RegexOptions.IgnoreCase), One_line_regex(new Regex(@"<td><b>Original Titel<\/b><\/td>([\S\s]*?)\/td>", RegexOptions.IgnoreCase), WebContent));
             result.ImageUrl = Get_ImageUrl(WebContent);
             result.SetProviderId(ProxerSeriesProvider.provider_name, id);
             result.Overview = Get_Overview(WebContent);
@@ -110,18 +111,18 @@ namespace Emby.Plugins.Proxer
             switch (lang)
             {
                 case "en":
-                    return One_line_regex(new Regex(@">([\S\s]*?)<"), One_line_regex(new Regex(@"<td><b>Englischer Titel<\/b><\/td>([\S\s]*?)\/td>"), WebContent));
+                    return One_line_regex(new Regex(@">([\S\s]*?)<", RegexOptions.IgnoreCase), One_line_regex(new Regex(@"<td><b>Englischer Titel<\/b><\/td>([\S\s]*?)\/td>", RegexOptions.IgnoreCase), WebContent));
 
                 case "de":
 
-                    return One_line_regex(new Regex(@">([\S\s]*?)<"), One_line_regex(new Regex(@"<td><b>Deutscher Titel<\/b><\/td>([\S\s]*?)\/td>"), WebContent));
+                    return One_line_regex(new Regex(@">([\S\s]*?)<", RegexOptions.IgnoreCase), One_line_regex(new Regex(@"<td><b>Deutscher Titel<\/b><\/td>([\S\s]*?)\/td>", RegexOptions.IgnoreCase), WebContent));
 
                 case "jap":
-                    return One_line_regex(new Regex(@">([\S\s]*?)<"), One_line_regex(new Regex(@"<td><b>Japanischer Titel<\/b><\/td>([\S\s]*?)\/td>"), WebContent));
+                    return One_line_regex(new Regex(@">([\S\s]*?)<", RegexOptions.IgnoreCase), One_line_regex(new Regex(@"<td><b>Japanischer Titel<\/b><\/td>([\S\s]*?)\/td>", RegexOptions.IgnoreCase), WebContent));
 
                 //Default is jap_r
                 default:
-                    return One_line_regex(new Regex(@">([\S\s]*?)<"), One_line_regex(new Regex(@"<td><b>Original Titel<\/b><\/td>([\S\s]*?)\/td>"), WebContent));
+                    return One_line_regex(new Regex(@">([\S\s]*?)<", RegexOptions.IgnoreCase), One_line_regex(new Regex(@"<td><b>Original Titel<\/b><\/td>([\S\s]*?)\/td>", RegexOptions.IgnoreCase), WebContent));
             }
         }
 
@@ -133,13 +134,13 @@ namespace Emby.Plugins.Proxer
         public static List<string> Get_Genre(string WebContent)
         {
             List<string> result = new List<string>();
-            string Genres = One_line_regex(new Regex(@"<b>Genre<\/b>((?:.*?\r?\n?)*)<\/tr>"), WebContent);
+            string Genres = One_line_regex(new Regex(@"<b>Genre<\/b>((?:.*?\r?\n?)*)<\/tr>", RegexOptions.IgnoreCase), WebContent);
             int x = 1;
             string Proxer_Genre = null;
-            while (Proxer_Genre != "")
+            while (!string.IsNullOrEmpty(Proxer_Genre))
             {
-                Proxer_Genre = One_line_regex(new Regex("\">" + @"((?:.*?\r?\n?)*)<"), Genres, 1, x);
-                if (Proxer_Genre != "")
+                Proxer_Genre = One_line_regex(new Regex("\">" + @"((?:.*?\r?\n?)*)<", RegexOptions.IgnoreCase), Genres, 1, x);
+                if (!string.IsNullOrEmpty(Proxer_Genre))
                 {
                     result.Add(Proxer_Genre);
                 }
@@ -155,7 +156,7 @@ namespace Emby.Plugins.Proxer
         /// <returns></returns>
         public static string Get_Rating(string WebContent)
         {
-            return One_line_regex(new Regex("<span class=\"average\">" + @"(.*?)<"), WebContent);
+            return One_line_regex(new Regex("<span class=\"average\">" + @"(.*?)<", RegexOptions.IgnoreCase), WebContent);
         }
 
         /// <summary>
@@ -165,9 +166,9 @@ namespace Emby.Plugins.Proxer
         /// <returns></returns>
         public static string Get_ImageUrl(string WebContent)
         {
-            string url = "http://" + One_line_regex(new Regex("<img src=\"" + @"\/\/((?:.*?\r?\n?)*)" + "\""), WebContent);
+            string url = "http://" + One_line_regex(new Regex("<img src=\"" + @"\/\/((?:.*?\r?\n?)*)" + "\"", RegexOptions.IgnoreCase), WebContent);
 
-            if (url.Contains("cdn.proxer.me/cover"))
+            if (url.Contains("cdn.proxer.me/cover", StringComparison.OrdinalIgnoreCase))
                 return url;
 
             return "";
@@ -180,7 +181,7 @@ namespace Emby.Plugins.Proxer
         /// <returns></returns>
         public static string Get_Overview(string WebContent)
         {
-            return One_line_regex(new Regex(@"Beschreibung:<\/b><br>((?:.*?\r?\n?)*)<\/td>"), WebContent);
+            return One_line_regex(new Regex(@"Beschreibung:<\/b><br>((?:.*?\r?\n?)*)<\/td>", RegexOptions.IgnoreCase), WebContent);
         }
 
         /// <summary>
@@ -205,20 +206,20 @@ namespace Emby.Plugins.Proxer
                 WebContent = await WebRequestAPI(string.Format(SearchLink, Uri.EscapeUriString(title)), cancellationToken).ConfigureAwait(false);
             }
             int x = 0;
-            while (result_text != "")
+            while (!string.IsNullOrEmpty(result_text))
             {
-                result_text = One_line_regex(new Regex("<tr align=\"" + @"left(.*?)tr>"), WebContent, 1, x);
-                if (result_text != "")
+                result_text = One_line_regex(new Regex("<tr align=\"" + @"left(.*?)tr>", RegexOptions.IgnoreCase), WebContent, 1, x);
+                if (!string.IsNullOrEmpty(result_text))
                 {
                     //get id
-                    string id = One_line_regex(new Regex("class=\"entry" + @"(.*?)" + "\">"), result_text);
-                    string a_name = One_line_regex(new Regex("#top\">" + @"(.*?)</a>"), result_text);
+                    string id = One_line_regex(new Regex("class=\"entry" + @"(.*?)" + "\">", RegexOptions.IgnoreCase), result_text);
+                    string a_name = One_line_regex(new Regex("#top\">" + @"(.*?)</a>", RegexOptions.IgnoreCase), result_text);
                     if (Equals_check.Compare_strings(a_name, title))
                     {
                         result = id;
                         return result;
                     }
-                    if (Int32.TryParse(id, out int n))
+                    if (Int32.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, out int n))
                     {
                         anime_search_names.Add(a_name);
                         anime_search_ids.Add(id);
@@ -242,21 +243,21 @@ namespace Emby.Plugins.Proxer
             string result_text = null;
             string WebContent = await WebRequestAPI(string.Format(SearchLink, Uri.EscapeUriString(title)), cancellationToken).ConfigureAwait(false);
             int x = 0;
-            while (result_text != "")
+            while (!string.IsNullOrEmpty(result_text))
             {
-                result_text = One_line_regex(new Regex("<tr align=\"" + @"left(.*?)tr>"), WebContent, 1, x);
-                if (result_text != "")
+                result_text = One_line_regex(new Regex("<tr align=\"" + @"left(.*?)tr>", RegexOptions.IgnoreCase), WebContent, 1, x);
+                if (!string.IsNullOrEmpty(result_text))
                 {
                     //get id
 
-                    string id = One_line_regex(new Regex("class=\"entry" + @"(.*?)" + "\">"), result_text);
-                    string a_name = One_line_regex(new Regex("#top\">" + @"(.*?)</a>"), result_text);
+                    string id = One_line_regex(new Regex("class=\"entry" + @"(.*?)" + "\">", RegexOptions.IgnoreCase), result_text);
+                    string a_name = One_line_regex(new Regex("#top\">" + @"(.*?)</a>", RegexOptions.IgnoreCase), result_text);
                     if (Equals_check.Compare_strings(a_name, title))
                     {
                         result.Add(id);
                         return result;
                     }
-                    if (Int32.TryParse(id, out int n))
+                    if (Int32.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, out int n))
                     {
                         result.Add(id);
                     }
