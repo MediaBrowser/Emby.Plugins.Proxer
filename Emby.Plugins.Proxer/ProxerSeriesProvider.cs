@@ -16,7 +16,7 @@ using Emby.Anime;
 
 namespace Emby.Plugins.Proxer
 {
-    public class ProxerSeriesProvider : IRemoteMetadataProvider<Series, SeriesInfo>, IHasOrder
+    public class ProxerSeriesProvider : IRemoteMetadataProvider<Series, SeriesInfo>, IHasOrder, IHasSupportedExternalIdentifiers
     {
         private readonly ILogger _log;
         private readonly IHttpClient _httpClient;
@@ -32,6 +32,14 @@ namespace Emby.Plugins.Proxer
             _httpClient = httpClient;
 
             _api = new Api(_log, httpClient);
+        }
+
+        public string[] GetSupportedExternalIdentifiers()
+        {
+            return new[] {
+
+                provider_name
+            };
         }
 
         public async Task<MetadataResult<Series>> GetMetadata(SeriesInfo info, CancellationToken cancellationToken)
